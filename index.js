@@ -93,6 +93,22 @@ app.post('/product', async (req, res) => {
 //       res.status(500).json({ message: 'Failed to fetch recommendations' });
 //   }
 // });
+app.delete('/product/:id', async (req, res) => {
+  try {
+      const queryId = req.params.id;
+      const result = await productCollection.deleteOne({ _id: new ObjectId(queryId) });
+
+      if (result.deletedCount === 1) {
+          res.json({ message: "Query deleted successfully" });
+      } else {
+          res.status(404).json({ message: "Query not found" });
+      }
+  } catch (error) {
+      console.error('Error deleting query:', error);
+      res.status(500).json({ message: 'Failed to delete query' });
+  }
+});
+
 
 app.get('/recommendation', async (req, res) => {
   try {
@@ -112,6 +128,23 @@ app.get('/recommendation', async (req, res) => {
 });
 
 
+app.get('/recommendation', async (req, res) => {
+    try {
+        const { email } = req.query; // ✅ Extract user email from query params
+
+        if (!email) {
+            return res.status(400).json({ message: "Missing email parameter" });
+        }
+
+        console.log("Fetching recommendations for email:", email); // Debugging log
+
+        const recommendations = await recommendationCollection.find({ userEmail: email }).toArray();
+        res.json(recommendations);
+    } catch (error) {
+        console.error('Error fetching recommendations:', error);
+        res.status(500).json({ message: 'Failed to fetch recommendations' });
+    }
+});
 
 
 
@@ -157,7 +190,7 @@ app.get('/recommendation', async (req, res) => {
       const result = await recommendationCollection.insertOne(recommendation);
 
       // ✅ Fix: Properly update recommendation count in queries collection
-      await productCollection.updateOne(
+      await recommendationCollection.updateOne(
           { _id: new ObjectId(recommendation.queryId) },
           { $inc: { recommendationCount: 1 } }
       );
