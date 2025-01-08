@@ -7,7 +7,8 @@ const cors = require('cors');
 const port = process.env.PORT || 3000;
 
 
-
+app.use(cors())
+app.use(express.json()); // This enables JSON parsing
 
 
 const { MongoClient, ServerApiVersion, ObjectId  } = require('mongodb');
@@ -27,9 +28,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
 
 //products
@@ -115,14 +116,9 @@ app.delete('/product/:id', async (req, res) => {
 
 app.get('/recommendation', async (req, res) => {
   try {
-      const queryId = req.query.queryId; // Extract queryId from query parameters
-      if (!queryId) {
-          return res.status(400).json({ message: "Missing queryId parameter" });
-      }
+      
 
-      console.log("Received queryId:", queryId); // Debugging statement
-
-      const recommendations = await recommendationCollection.find({ queryId: queryId }).toArray();
+      const recommendations = await recommendationCollection.find().toArray();
       res.json(recommendations);
   } catch (error) {
       console.error('Error fetching recommendations:', error);
@@ -193,10 +189,10 @@ app.get('/recommendation', async (req, res) => {
       const result = await recommendationCollection.insertOne(recommendation);
 
       // ✅ Fix: Properly update recommendation count in queries collection
-      await recommendationCollection.updateOne(
-          { _id: new ObjectId(recommendation.queryId) },
-          { $inc: { recommendationCount: 1 } }
-      );
+      // await recommendationCollection.updateOne(
+      //     { _id: new ObjectId(recommendation.queryId) },
+      //     { $inc: { recommendationCount: 1 } }
+      // );
 
       res.status(201).json(result);
   } catch (error) {
@@ -218,8 +214,7 @@ run().catch(console.dir);
 
 
 
-app.use(cors())
-app.use(express.json()); // This enables JSON parsing
+
 
 
 app.get('/', (req, res) => {
